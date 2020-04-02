@@ -117,6 +117,18 @@ let
         '';
       };
 
+      tlsMode = mkOption {
+        type = types.bool;
+        default = false;
+        description = "Use TLS challenge instead of HTTP.";
+      };
+
+      tlsPort = mkOption {
+        type = types.int;
+        default = 443;
+        description = "Port to use for TLS challenge.";
+      };
+
       credentialsFile = mkOption {
         type = types.path;
         description = ''
@@ -307,7 +319,7 @@ in
                           ++ optionals (cfg.acceptTerms) [ "--accept-tos" ]
                           ++ optionals (data.dnsProvider != null && !data.dnsPropagationCheck) [ "--dns.disable-cp" ]
                           ++ concatLists (mapAttrsToList (name: root: [ "-d" name ]) data.extraDomains)
-                          ++ (if data.dnsProvider != null then [ "--dns" data.dnsProvider ] else [ "--http" "--http.webroot" data.webroot ])
+                          ++ (if data.dnsProvider != null then [ "--dns" data.dnsProvider ] else [ (if cfg.tlsMode == true then [ "--tls" "--tls.port" cfg.tlsPort ] else [ "--http" "--http.webroot" data.webroot ]) ])
                           ++ optionals (cfg.server != null || data.server != null) ["--server" (if data.server == null then cfg.server else data.server)];
                 certOpts = optionals data.ocspMustStaple [ "--must-staple" ];
                 runOpts = escapeShellArgs (globalOpts ++ [ "run" ] ++ certOpts);
